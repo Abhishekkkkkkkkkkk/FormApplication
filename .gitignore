@@ -1,0 +1,15 @@
+# ===== FRONTEND =====
+df-frontend/node_modules/
+df-frontend/dist/
+df-frontend/.env
+
+# ===== BACKEND =====
+dynamic-form-pdf/target/
+dynamic-form-pdf/.env
+
+# ===== IDE =====
+.idea/
+.vscode/
+
+# ===== OS =====
+.DS_Store
