@@ -1,15 +1,45 @@
+# ===== SENSITIVE & ENVIRONMENT FILES =====
+.env
+.env.*
+*.env
+*.key
+*.pem
+*.p12
+*.cer
+*.crt
+*.pfx
+*.secret
+*.credentials
+application-secret.properties
+application-*-secret.properties
+
 # ===== FRONTEND =====
 df-frontend/node_modules/
 df-frontend/dist/
-df-frontend/.env
+df-frontend/build/
+df-frontend/.env*
 
 # ===== BACKEND =====
 dynamic-form-pdf/target/
-dynamic-form-pdf/.env
+dynamic-form-pdf/.env*
+*.class
+*.jar
+*.war
 
-# ===== IDE =====
+# ===== LOGS =====
+*.log
+logs/
+
+# ===== IDE & EDITORS =====
 .idea/
 .vscode/
+*.iml
+*.iws
+*.ipr
+.project
+.classpath
+.settings/
 
 # ===== OS =====
 .DS_Store
+Thumbs.db
