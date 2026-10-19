@@ -1,13 +1,21 @@
 package com.example.dynamicformpdf.service;
 
 import com.example.dynamicformpdf.dto.FormRequestDTO;
+import com.example.dynamicformpdf.dto.FormResponseDTO;
 import com.example.dynamicformpdf.entity.FormEntity;
+import com.example.dynamicformpdf.exception.ResourceNotFoundException;
 import com.example.dynamicformpdf.repository.FormRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FormService {
@@ -15,37 +23,76 @@ public class FormService {
     private final FormRepository repository;
     private final PdfService pdfService;
 
-    public FormEntity save(FormRequestDTO dto) {
+    @Transactional
+    public FormResponseDTO save(FormRequestDTO dto) {
+        log.info("Processing application submission for email: {}", dto.getEmail());
 
-        try {
-            FormEntity entity = new FormEntity();
+        FormEntity entity = FormEntity.builder()
+                .name(dto.getName().trim())
+                .email(dto.getEmail().trim().toLowerCase())
+                .contactNumber(dto.getContactNumber().trim())
+                .address(dto.getAddress().trim())
+                .city(dto.getCity().trim())
+                .state(dto.getState().trim())
+                .pinCode(dto.getPinCode().trim())
+                .date(dto.getDate())
+                .subject(dto.getSubject().trim())
+                .message(dto.getMessage().trim())
+                .build();
 
-            entity.setName(dto.getName());
-            entity.setEmail(dto.getEmail());
-            entity.setContactNumber(dto.getContactNumber());
-            entity.setAddress(dto.getAddress());
-            entity.setCity(dto.getCity());
-            entity.setState(dto.getState());
-            entity.setPinCode(dto.getPinCode());
-            entity.setDate(dto.getDate());
-            entity.setSubject(dto.getSubject());
-            entity.setMessage(dto.getMessage());
+        FormEntity saved = repository.save(entity);
+        log.info("Application successfully persisted with ID: {}", saved.getId());
 
-            return repository.save(entity);
-
-        } catch (Exception e) {
-            e.printStackTrace(); // shows real cause in console
-            throw e;
-        }
+        return mapToDTO(saved);
     }
 
-    public List<FormEntity> getAll() {
-        return repository.findAll();
+    @Transactional(readOnly = true)
+    public Page<FormResponseDTO> getAll(Pageable pageable) {
+        return repository.findAllByOrderByCreatedAtDesc(pageable)
+                .map(this::mapToDTO);
     }
 
+    @Transactional(readOnly = true)
+    public List<FormResponseDTO> getAllList() {
+        return repository.findAll().stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public FormResponseDTO getById(Long id) {
+        return repository.findById(id)
+                .map(this::mapToDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("Application Form", "id", id));
+    }
+
+    @Transactional(readOnly = true)
     public byte[] generatePdf(Long id) {
+        log.info("Generating PDF for form ID: {}", id);
         FormEntity entity = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Form not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Application Form", "id", id));
+
         return pdfService.generate(entity);
+    }
+
+    public FormResponseDTO mapToDTO(FormEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+        return FormResponseDTO.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .email(entity.getEmail())
+                .contactNumber(entity.getContactNumber())
+                .address(entity.getAddress())
+                .city(entity.getCity())
+                .state(entity.getState())
+                .pinCode(entity.getPinCode())
+                .date(entity.getDate())
+                .subject(entity.getSubject())
+                .message(entity.getMessage())
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .build();
     }
 }
